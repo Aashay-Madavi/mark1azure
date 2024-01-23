@@ -4,6 +4,7 @@ from .models import Orders
 from .serializers import OrderSerializer
 from rest_framework.response import Response
 from rest_framework import status
+from products.models import Products
 # Create your views here.
 
 
@@ -19,8 +20,23 @@ class AllOrders(APIView):
 
     def post(self, request):
         serializer = OrderSerializer(data=request.data)
+        pid = request.data.get('productId')
+        st = request.data.get('status')
+        print(pid)
         if serializer.is_valid():
             serializer.save()
+            try:
+                if st == 'pending' or st == 'delivered':
+                    products = Products.objects.get(id=pid)
+                    products.quantity -= 1
+                    products.save()
+                else:
+                    products = Products.objects.get(id=pid)
+                    products.quantity += 1
+                    products.save()
+
+            except Exception:
+                return Response("Product does exist", status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response("not vaild data to enter", status=status.HTTP_400_BAD_REQUEST)
