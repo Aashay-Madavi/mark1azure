@@ -35,7 +35,7 @@ class OneUser(APIView):
         try:
             user = Users.objects.get(id=id)
             serializer = UserSerializer(user)
-        except Exception:
+        except Users.DoesNotExist:
             return Response("No Such User", status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
@@ -57,6 +57,14 @@ class DeleteUser(APIView):
         try:
             user = Users.objects.get(id=id)
             user.delete()
-        except Exception:
+        except Users.DoesNotExist:
             return Response("User not present", status=status.HTTP_404_NOT_FOUND)
         return Response("user deleted", status=status.HTTP_200_OK)
+
+
+class RegisterUser(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

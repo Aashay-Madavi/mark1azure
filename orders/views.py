@@ -21,25 +21,18 @@ class AllOrders(APIView):
     def post(self, request):
         serializer = OrderSerializer(data=request.data)
         pid = request.data.get('productId')
-        st = request.data.get('status')
-        print(pid)
-        if serializer.is_valid():
-            serializer.save()
-            try:
-                if st == 'pending' or st == 'delivered':
-                    products = Products.objects.get(id=pid)
-                    products.quantity -= 1
-                    products.save()
-                else:
-                    products = Products.objects.get(id=pid)
-                    products.quantity += 1
-                    products.save()
 
-            except Exception:
-                return Response("Product does exist", status=status.HTTP_404_NOT_FOUND)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response("not vaild data to enter", status=status.HTTP_400_BAD_REQUEST)
+        product = Products.objects.get(id=pid)
+        oquan = request.data.get('quantity')
+        pquan = product.quantity
+        if serializer.is_valid():
+            if oquan > pquan:
+                return Response("Product Out of Stock", status=status.HTTP_400_BAD_REQUEST)
+            elif oquan <= pquan:
+                product.quantity -= oquan
+                product.save()
+                serializer.save()
+            return Response("Order Placed", status=status.HTTP_201_CREATED)
 
 
 class OneOrder(APIView):
@@ -47,7 +40,7 @@ class OneOrder(APIView):
         try:
             order = Orders.objects.get(id=id)
             serializer = OrderSerializer(order)
-        except Exception:
+        except Orders.DoesNotExist:
             return Response("No such order present", status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -67,7 +60,7 @@ class DeleteOrder(APIView):
     def delete(self, request, id):
         try:
             order = Orders.objects.get(id=id)
-        except Exception:
+        except Orders.DoesNotExist:
             return Response("Order Not found", status=status.HTTP_400_BAD_REQUEST)
         order.delete()
         return Response("Order deleted", status=status.HTTP_200_OK)

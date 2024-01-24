@@ -6,6 +6,7 @@ urlpatterns = [
     path('<int:id>/', views.OneUser.as_view()),
     path('edit/<int:id>/', views.UpdateUser.as_view()),
     path('delete/<int:id>/', views.DeleteUser.as_view()),
+    path('register/', views.RegisterUser.as_view())
 
 
 ]

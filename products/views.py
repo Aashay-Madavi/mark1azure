@@ -62,5 +62,5 @@ class DeleteProduct(APIView):
             product = Products.objects.get(id=pk)
             product.delete()
             return Response("Record deleted", status=status.HTTP_204_NO_CONTENT)
-        except Exception:
+        except Products.DoesNotExist:
             return Response("No Such Product ", status=status.HTTP_404_NOT_FOUND)
