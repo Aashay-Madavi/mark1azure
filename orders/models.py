@@ -15,5 +15,6 @@ class Orders(models.Model):
     productId = models.ForeignKey(Products, on_delete=models.CASCADE)
     userId = models.ForeignKey(Users, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(choices=status, max_length=100)
+    status = models.CharField(
+        default='pending', choices=status, max_length=100)
     quantity = models.IntegerField(default=1)

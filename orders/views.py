@@ -48,10 +48,21 @@ class OneOrder(APIView):
 class UpadteOrder(APIView):
     def put(self, request, id):
         order = Orders.objects.get(id=id)
+        pid = order.productId.pk
+        product = Products.objects.get(id=pid)
+        oquan = order.quantity
+        st = request.data.get('status')
+
         serailizer = OrderSerializer(order, data=request.data, partial=True)
         if serailizer.is_valid():
-            serailizer.save()
-            return Response(serailizer.data, status=status.HTTP_202_ACCEPTED)
+            if st == 'cancled':
+                product.quantity += oquan
+                product.save()
+                serailizer.save()
+                return Response(serailizer.data, status=status.HTTP_202_ACCEPTED)
+            else:
+                serailizer.save()
+                return Response(serailizer.data, status=status.HTTP_202_ACCEPTED)
         else:
             return Response("No data present to update", status=status.HTTP_400_BAD_REQUEST)
 
