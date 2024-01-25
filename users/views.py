@@ -3,6 +3,10 @@ from rest_framework.views import APIView
 from .models import Users
 from .serializers import UserSerializer
 from rest_framework import status
+from django.contrib.auth import get_user_model
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.tokens import RefreshToken
+Users = get_user_model()
 
 
 class AllUsers(APIView):
@@ -62,9 +66,20 @@ class DeleteUser(APIView):
         return Response("user deleted", status=status.HTTP_200_OK)
 
 
-class RegisterUser(APIView):
+class LoginUser(APIView):
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        email = request.data.get('email')
+        password = request.data.get('password')
+        user = Users.objects.filter(email=email).first()
+        passw = Users.objects.filter(password=password).first()
+        if user is None:
+            raise AuthenticationFailed("No such user")
+        if passw is None:
+            raise AuthenticationFailed("wrong password")
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
