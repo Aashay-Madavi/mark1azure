@@ -6,25 +6,24 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 Users = get_user_model()
 
 
 class AllUsers(APIView):
 
-    def get(self, request):
-        users = Users.objects.all()
-        serializer = UserSerializer(users, many=True)
-        if serializer:
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
     def post(self, request):
         user = Users.objects.all()
+
         email = request.data.get("email")
+        phone_no = request.data.get("contactNo")
+
         existing_user = user.filter(email=email)
+        existing_phone = user.filter(contactNo=phone_no)
+
         serializer = UserSerializer(data=request.data)
-        if existing_user:
+        if existing_user or existing_phone:
             return Response("user already exists", status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
             if serializer.is_valid():
@@ -34,7 +33,23 @@ class AllUsers(APIView):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class OneUser(APIView):
+class FetchUsers(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        users = Users.objects.all()
+        serializer = UserSerializer(users, many=True)
+        if serializer:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class FetchUser(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id):
         try:
             user = Users.objects.get(id=id)
@@ -45,6 +60,9 @@ class OneUser(APIView):
 
 
 class UpdateUser(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, id):
         user = Users.objects.get(id=id)
         serializer = UserSerializer(user, data=request.data, partial=True)
@@ -56,6 +74,9 @@ class UpdateUser(APIView):
 
 
 class DeleteUser(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, id):
 
         try:
@@ -67,19 +88,37 @@ class DeleteUser(APIView):
 
 
 class LoginUser(APIView):
+
     def post(self, request):
 
         email = request.data.get('email')
         password = request.data.get('password')
+
         user = Users.objects.filter(email=email).first()
-        passw = Users.objects.filter(password=password).first()
+
         if user is None:
             raise AuthenticationFailed("No such user")
-        if passw is None:
-            raise AuthenticationFailed("wrong password")
+        # if not user.check_password(password):
+        if not user.check_password(password):
+            return Response("Wrong password", status=status.HTTP_400_BAD_REQUEST)
 
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         })
+
+
+class LogoutUser(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh = request.data.get('refresh')
+
+            token = RefreshToken(refresh)
+        
+        except:
+            return Response("no such user to Logout", status=status.HTTP_400_BAD_REQUEST)
+        token.blacklist()
+        return Response("Loged Out", status=status.HTTP_200_OK)

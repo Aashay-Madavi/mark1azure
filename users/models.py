@@ -19,7 +19,7 @@ from .manager import UserManager
 class Users(AbstractUser, PermissionsMixin):
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100, unique=True, blank=False)
-    contactNo = models.CharField(max_length=10, unique=True)
+    contactNo = models.CharField(max_length=10)
     dob = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=100)
     username = None
