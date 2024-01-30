@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 import re
 Users = get_user_model()
 
@@ -27,8 +27,10 @@ class AllUsers(APIView):
 
         serializer = UserSerializer(data=request.data)
         if result:
-            if existing_user or existing_phone:
-                return Response("user already exists", status=status.HTTP_406_NOT_ACCEPTABLE)
+            if existing_user:
+                return Response("email already exists", status=status.HTTP_406_NOT_ACCEPTABLE)
+            elif existing_phone:
+                return Response("phone number already exists", status=status.HTTP_406_NOT_ACCEPTABLE)
             else:
                 if serializer.is_valid():
                     serializer.save()
@@ -41,22 +43,17 @@ class AllUsers(APIView):
 
 class FetchUsers(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        superuser = Users.objects.filter(is_superuser=True)
-        super_user_email = superuser.values_list("email", flat=True)
+
         users = Users.objects.all()
-        users_email = users.values_list("email", flat=True)
-        for ue in users_email:
-            if str(super_user_email) not in ue:
-                return Response("you are not permited for this action", status=status.HTTP_400_BAD_REQUEST)
-            else:
-                serializer = UserSerializer(users, many=True)
-                if serializer:
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UserSerializer(users, many=True)
+        if serializer:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class FetchUser(APIView):
@@ -118,7 +115,7 @@ class LoginUser(APIView):
 
         if user is None:
             raise AuthenticationFailed("No such user")
-        # if not user.check_password(password):
+
         if not user.check_password(password):
             return Response("Wrong password", status=status.HTTP_400_BAD_REQUEST)
 

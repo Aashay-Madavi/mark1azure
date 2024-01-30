@@ -1,9 +1,9 @@
 from django.urls import path
-from orders.views import AllOrders, OneOrder, UpadteOrder, DeleteOrder
+from orders.views import AllOrders, OneOrder, UpadteOrder, DeleteOrder, AddOrder
 urlpatterns = [
     path('', AllOrders.as_view()),
-    path('add/', AllOrders.as_view()),
-    path('<int:id>/', OneOrder.as_view()),
+    path('add/', AddOrder.as_view()),
+    path('myorders/', OneOrder.as_view()),
     path('edit/<int:id>/', UpadteOrder.as_view()),
     path('delete/<int:id>/', DeleteOrder.as_view()),
 ]
