@@ -8,11 +8,14 @@ from django.shortcuts import get_object_or_404
 from .serializers import ProductSerializer
 from .models import Products
 from django.http import Http404
+from rest_framework.permissions import IsAdminUser
 
 # Create your views here.
 
 
 class AllProducts(APIView):
+    permission_classes = [IsAdminUser]
+
     def get(self, request):
         products = Products.objects.all()
         serializer = ProductSerializer(products, many=True)
@@ -34,10 +37,13 @@ class AllProducts(APIView):
 
 
 class OneProduct(APIView):
+    permission_classes = [IsAdminUser]
+
     def get(self, request, pk):
         try:
             products = get_object_or_404(Products, pk=pk)
             serializer = ProductSerializer(products)
+
         except Http404:
 
             return Response("No such product")
@@ -45,6 +51,8 @@ class OneProduct(APIView):
 
 
 class UpdateProduct(APIView):
+    permission_classes = [IsAdminUser]
+
     def put(self, request, pk):
         product = Products.objects.get(pk=pk)
         serializer = ProductSerializer(
@@ -57,6 +65,8 @@ class UpdateProduct(APIView):
 
 
 class DeleteProduct(APIView):
+    permission_classes = [IsAdminUser]
+
     def delete(self, request, pk):
         try:
             product = Products.objects.get(id=pk)

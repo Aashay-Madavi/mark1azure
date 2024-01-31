@@ -64,9 +64,11 @@ class UpadteOrder(APIView):
 
     def put(self, request, id):
         all_order = Orders.objects.filter(userId=request.user)
-
-        order = all_order.get(pk=id)
-
+        user = request.user
+        try:
+            order = all_order.get(pk=id)
+        except Orders.DoesNotExist:
+            return Response("Order Not found", status=status.HTTP_400_BAD_REQUEST)
         pid = order.productId.pk
         product = Products.objects.get(id=pid)
         oquan = order.quantity
@@ -78,24 +80,29 @@ class UpadteOrder(APIView):
                 product.quantity += oquan
                 product.save()
                 serailizer.save()
+                return Response("order cnacled", status=status.HTTP_202_ACCEPTED)
+            elif st == 'delivered':
+                return Response('Not allowed to change status to delivered', status=status.HTTP_406_NOT_ACCEPTABLE)
+            elif st == 'delivered' and user.is_superuser:
+                serailizer.save()
                 return Response(serailizer.data, status=status.HTTP_202_ACCEPTED)
             else:
                 serailizer.save()
-                return Response(serailizer.data, status=status.HTTP_202_ACCEPTED)
+                return Response(serailizer.data, status=status.HTTP_200_OK)
         else:
             return Response("No data present to update", status=status.HTTP_400_BAD_REQUEST)
 
 
-class DeleteOrder(APIView):
-    permission_classes = [IsAuthenticated]
+# class DeleteOrder(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, id):
+#     def delete(self, request, id):
 
-        try:
-            all_order = Orders.objects.filter(userId=request.user)
-            order = all_order.get(pk=id)
+#         try:
+#             all_order = Orders.objects.filter(userId=request.user)
+#             order = all_order.get(pk=id)
 
-        except Orders.DoesNotExist:
-            return Response("Order Not found", status=status.HTTP_400_BAD_REQUEST)
-        order.delete()
-        return Response("Order deleted", status=status.HTTP_200_OK)
+#         except Orders.DoesNotExist:
+#             return Response("Order Not found", status=status.HTTP_400_BAD_REQUEST)
+#         order.delete()
+#         return Response("Order deleted", status=status.HTTP_200_OK)
