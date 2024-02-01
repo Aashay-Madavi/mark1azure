@@ -4,13 +4,19 @@ from orders.models import Orders
 
 
 class OrderTrack(models.Model):
-    confirmed = models.BooleanField(default=False)
-    dispatched = models.BooleanField(default=False)
-    shipped = models.BooleanField(default=False)
-    in_transit = models.BooleanField(default=False)
-    out_for_delivery = models.BooleanField(default=False)
+
+    confirmed = models.JSONField(
+        blank=True, default=dict)
+    dispatched = models.JSONField(
+        blank=True, default=dict)
+    shipped = models.JSONField(
+        blank=True, default=dict)
+    in_transit = models.JSONField(
+        blank=True, default=dict)
+    out_for_delivery = models.JSONField(
+        blank=True, default=dict)
     final_status = models.CharField(default="pending", max_length=100)
     orderId = models.ForeignKey(Orders, on_delete=models.CASCADE)
 
     def __str__(self):
-        return 'Tracking Id : ' + str(self.id)
+        return 'Tracking Id : ' + str(self.id)+' ' + str(self.date)

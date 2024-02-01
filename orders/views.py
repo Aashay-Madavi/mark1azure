@@ -93,16 +93,16 @@ class UpadteOrder(APIView):
             return Response("No data present to update", status=status.HTTP_400_BAD_REQUEST)
 
 
-# class DeleteOrder(APIView):
-#     permission_classes = [IsAuthenticated]
+class DeleteOrder(APIView):
+    permission_classes = [IsAdminUser]
 
-#     def delete(self, request, id):
+    def delete(self, request, id):
 
-#         try:
-#             all_order = Orders.objects.filter(userId=request.user)
-#             order = all_order.get(pk=id)
+        try:
+            all_order = Orders.objects.filter(userId=request.user)
+            order = all_order.get(pk=id)
 
-#         except Orders.DoesNotExist:
-#             return Response("Order Not found", status=status.HTTP_400_BAD_REQUEST)
-#         order.delete()
-#         return Response("Order deleted", status=status.HTTP_200_OK)
+        except Orders.DoesNotExist:
+            return Response("Order Not found", status=status.HTTP_400_BAD_REQUEST)
+        order.delete()
+        return Response("Order deleted", status=status.HTTP_200_OK)
