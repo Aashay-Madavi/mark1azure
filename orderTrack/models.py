@@ -19,4 +19,4 @@ class OrderTrack(models.Model):
     orderId = models.ForeignKey(Orders, on_delete=models.CASCADE)
 
     def __str__(self):
-        return 'Tracking Id : ' + str(self.id)+' ' + str(self.date)
+        return 'Tracking Id : ' + str(self.id)
