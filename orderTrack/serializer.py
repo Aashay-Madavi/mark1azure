@@ -9,50 +9,42 @@ class TrackingSerializer(ModelSerializer):
         fields = '__all__'
 
     def validate_put(self, data):
-
-        confirmed = self.instance.confirmed
-        dispatched = self.instance.dispatched
-        shipped = self.instance.shipped
-        in_transit = self.instance.in_transit
-        out_for_delivery = self.instance.out_for_delivery
-        final_status = self.instance.final_status
+        status_mapping = {
+            'confirmed': self.instance.confirmed,
+            'dispatched': self.instance.dispatched,
+            'shipped': self.instance.shipped,
+            'in_transit': self.instance.in_transit,
+            'out_for_delivery': self.instance.out_for_delivery,
+            'final_status': self.instance.final_status,
+        }
 
         keys = data.keys()
-        stat = data.get('final_status')
-        print(stat)
-        for k in keys:
+        
+        for key in keys:
+            request_status = key
 
-            if confirmed and dispatched and k == 'confirmed':
+        try:
+            current_status_index = list(
+                status_mapping.keys()).index(request_status)
 
-                raise ValidationError({'error': "Confirmed can't be Updated"})
-            if dispatched and shipped and k == 'dispatched':
-                raise ValidationError("Dispatched can't be Updated")
-            if shipped and in_transit and k == 'shipped':
-                raise ValidationError({'error': "Shipped can't be Updated"})
-            if in_transit and out_for_delivery and k == 'in_transit':
-                raise ValidationError({'error': "in_transit can't be Updated"})
-            if out_for_delivery and final_status and k == 'out_for_delivery':
-                raise ValidationError(
-                    {'out_for_deliveryerror': " can't be Updated"})
+        except ValueError:
+            raise ValidationError({'error': 'Invalid status provided.'})
 
-            if final_status == stat:
-
-                raise ValidationError(
-                    {'error': "Updating same status"})
-
-            if stat and stat != 'delivered':
-                raise ValidationError({'error': 'entering wrong status'})
-            if stat == 'delivered':
-                if confirmed and dispatched and shipped and in_transit and out_for_delivery:
-                    self.instance.final_status = stat
-                else:
-                    raise ValidationError(
-                        {'error': 'your order is delivered '})
+        if current_status_index == 0 or status_mapping[list(status_mapping.keys())[current_status_index - 1]]:
             return data
+
+        else:
+            raise ValidationError(
+                {'error': f'Cannot update to the {request_status}.'})
+
+    def validate_post(self, data):
+        for d in data:
+            if d != 'confirmed':
+                raise ValidationError("order must be confirmed first")
+        return data
 
     def validate(self, data):
-
-        if self.instance is None:
-            return data
-        else:
+        if self.instance:
             return self.validate_put(data)
+        else:
+            return self.validate_post(data)
